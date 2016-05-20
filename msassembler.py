@@ -9,7 +9,7 @@ import sys
 import argparse
 
 OPERATIONS = ["ADD", "MOV", "CMP", "BEQ", "IN", "OUT"]
-#OPERAND_NUMBER = {"ADD": 2, "MOV": 2, "CMP": 2, "BEC": 1, "IN": 2, "OUT": 2}
+OPERAND_NUMBER = {"ADD": 2, "MOV": 2, "CMP": 2, "BEQ": 1, "IN": 2, "OUT": 2}
 LABEL_SEPARATOR = ':'
 
 class Assembler:
@@ -23,6 +23,7 @@ class Assembler:
                      "BEQ": '11',
                      "IN":  '1110',
                      "OUT": '1111'})
+    _operand_number = dict(OPERAND_NUMBER)
 
     def __init__(self, source, output, verbose=False):
         self._labels = dict()
@@ -142,7 +143,7 @@ class Assembler:
         Returns a list of tuples (instruction, operand1, [operand0]).
         '''
         res = []
-        current_line = 0
+        current_line = 1
 
         self._input_file.seek(0)
         for line in self._input_file:
@@ -171,13 +172,16 @@ class Assembler:
             tokens = line.split(',')
             tokens = [t for t in tokens if t.isalnum() or '@' in t]
 
-            if (len(tokens) < 2): # Syntax: [op, op1, op2]
-                self._abort("Error: syntax error in line " + current_line)
 
             # Operation:
             operation = tokens[0].upper()
             if operation not in self._operations:
-                self._abort("Error: unknown operation in line " + current_line)
+                self._abort("Error: unknown operation in line %d"
+                            % current_line)
+            if (len(tokens) < self._operand_number[operation] + 1):
+                # Syntax: [op, op1, op2]
+                self._abort("Error: missing operand/s in %s, line %d"
+                            % (operation, current_line))
 
             # First operand:
             operand1 = tokens[1]
@@ -248,8 +252,10 @@ class Assembler:
 def main():
     parser = argparse.ArgumentParser(description='Ensambla código de la Máquina Sencilla.')
     parser.add_argument('input', help='Archivo a ensamblar', type=str)
-    parser.add_argument('-v', '--verbose', help='Mostrar detalles', action='store_true')
-    parser.add_argument('-o', '--output', help='Archivo de salida', type=str)
+    parser.add_argument('-v', '--verbose', help='Mostrar detalles del ensamblado',
+                        action='store_true')
+    parser.add_argument('-o', '--output', help='Archivo de salida',
+                        type=str)
     args = parser.parse_args()
 
     Assembler(args.input, args.output, args.verbose)
