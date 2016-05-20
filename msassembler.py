@@ -172,6 +172,9 @@ class Assembler:
             tokens = line.split(',')
             tokens = [t for t in tokens if t.isalnum() or '@' in t]
 
+            if len(tokens) == 0:
+                continue
+
 
             # Operation:
             operation = tokens[0].upper()
@@ -218,7 +221,7 @@ class Assembler:
                 D_operand = o[2]
 
             # D operand:
-            if mnemonic not in ["IN", "OUT"]:
+            if mnemonic not in ["IN", "OUT"] or not D_operand.isnumeric():
                 D = bin(self._getIdLocation(D_operand)) # Variable lookup
             else:
                 D = bin(int(D_operand))
